@@ -1,0 +1,12 @@
+.venv/
+Data/Split_data/
+Stitched_data/
+Data/Processing/
+Data/Interpolated_data/
+Data/Filtered_data/
+# no CSV data on GitHub (images are fine)
+*.csv
+*.npz
+__pycache__/
+# interactive viewer: ~50 MB, regenerate with python -m Algorytms.common.viewer
+Results/viewer/

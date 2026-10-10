@@ -1,0 +1,42 @@
+{
+  "n_particles": 5000,
+  "keep": 1.0,
+  "setting_cm_s": 50.37179259000003,
+  "tau_s": 1.0,
+  "q": 2537.3174887299815,
+  "meas_std_cm": [
+    0.2,
+    0.2,
+    0.2
+  ],
+  "interp_std_cm": 1.0,
+  "seed": 0,
+  "like_sigma_cm": 0.2,
+  "name": "particle",
+  "label": "Particle filter (N=5000, keep 100%, 0.504 m/s, likelihood 0.2 cm)",
+  "test_trajectories": [
+    2285,
+    2448,
+    3000,
+    433,
+    2218,
+    2172,
+    835,
+    791,
+    3298,
+    2724,
+    1436,
+    1250,
+    1934,
+    1187,
+    3103,
+    1727,
+    1340,
+    1564,
+    2094,
+    471
+  ],
+  "max_h": 500,
+  "min_history": 100,
+  "origin_stride": 1
+}
