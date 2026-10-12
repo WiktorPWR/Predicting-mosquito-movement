@@ -5,9 +5,11 @@ Code only; results go to [../Results/](../Results/). Run everything from the rep
 
 | folder | content |
 |---|---|
-| [common/](common/) | shared data loading, evaluation protocol, figures, 3D viewer, convergence analysis |
+| [common/](common/) | shared data loading, training windows (`ml_data.py`), evaluation protocol, figures, 3D viewer, convergence analysis |
 | [kalman/](kalman/README.md) | Kalman filter (constant velocity) |
 | [particle/](particle/README.md) | particle filter |
+| [baselines/](baselines/README.md) | constant velocity, linear autoregression |
+| [gru/](gru/README.md) | GRU networks (displacement / position input) |
 | `compare_models.py` | one table and figure comparing all evaluated algorithms → `Results/comparison/` |
 
 ## Evaluation protocol (same for every algorithm)

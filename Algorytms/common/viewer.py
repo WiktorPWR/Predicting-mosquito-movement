@@ -118,6 +118,9 @@ const INK="#0b0b0b",INK2="#52514e",MUTED="#898781",GRID="#e1e0d9",SURF="#fcfcfb"
 const names=Object.keys(D.models), M0=D.models[names[0]];
 const N=D.pos.length, dt=D.dt, viewO=M0.view_origins, steps=M0.err_steps, vsteps=M0.view_steps;
 const col=(a,k)=>a.map(r=>r[k]);
+// fixed 3D box = flight volume + 50 cm, so predictions that leave the chamber go off-screen instead of rescaling
+const BOX=[0,1,2].map(a=>{const v=col(D.pos,a);return [Math.min(...v)-50,Math.max(...v)+50]});
+const SPAN=BOX.map(b=>b[1]-b[0]), ASPECT={x:SPAN[0]/Math.max(...SPAN),y:SPAN[1]/Math.max(...SPAN),z:SPAN[2]/Math.max(...SPAN)};
 const LBL=nm=>D.models[nm].label||nm;
 document.getElementById("title").textContent="Trajectory "+D.tid+" · "+(N*dt).toFixed(1)+" s · "+names.map(LBL).join(" vs ");
 const tsel=document.getElementById("tsel");
@@ -153,14 +156,19 @@ function scene3d(){
                name:"best particle (prediction source)",hoverinfo:"skip"});}});
   tr.push({type:"scatter3d",mode:"markers",x:[P[o][0]],y:[P[o][1]],z:[P[o][2]],marker:{color:INK,size:6},name:"now"});
   Plotly.react("p3d",tr,{...base,uirevision:"keep",margin:{l:0,r:0,t:32,b:0},
-    scene:{xaxis:axis("x [cm]"),yaxis:axis("y [cm]"),zaxis:axis("z [cm]"),aspectmode:"data"}},{responsive:true});
+    scene:{xaxis:{...axis("x [cm]"),range:BOX[0]},yaxis:{...axis("y [cm]"),range:BOX[1]},zaxis:{...axis("z [cm]"),range:BOX[2]},
+           aspectmode:"manual",aspectratio:ASPECT}},{responsive:true});
+}
+function errRange(k){   // log10 range over all models at horizon k, capped at 10 m
+  let lo=Infinity,hi=0;names.forEach(nm=>D.models[nm].err[k].forEach(v=>{if(v!=null&&v>0){lo=Math.min(lo,v);hi=Math.max(hi,v)}}));
+  return [Math.log10(lo)-0.1,Math.log10(Math.min(hi,1000))+0.1];
 }
 function errChart(){
   const k=+hsel.value, tr=names.map((nm,m)=>{const md=D.models[nm];
     return {type:"scattergl",mode:"lines",x:md.origins.map(o=>o*dt),y:md.err[k],line:{color:C[m],width:1.2},name:LBL(nm),
             hovertemplate:"t=%{x:.2f} s<br>error %{y:.2f} cm<extra>"+LBL(nm)+"</extra>"}});
   Plotly.react("perr",tr,{...base,title:{text:names.map(LBL).join(", ")+": prediction error at "+hsel.options[hsel.selectedIndex].text+" horizon",font:{size:13},x:0},
-    xaxis:axis("flight time [s]"),yaxis:{...axis("error [cm] (log)"),type:"log"},shapes:[cursor()],uirevision:"keep"},{responsive:true});
+    xaxis:axis("flight time [s]"),yaxis:{...axis("error [cm] (log, clipped at 10 m)"),type:"log",range:errRange(k)},shapes:[cursor()]},{responsive:true});
 }
 function spdChart(){
   Plotly.react("pspd",[{type:"scattergl",mode:"lines",x:D.speed.map((_,i)=>i*dt),y:D.speed,line:{color:INK2,width:1},name:"speed",

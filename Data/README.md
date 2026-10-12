@@ -15,6 +15,7 @@ CSV files are not stored in git (`.gitignore`); every folder below can be regene
 | 3. fill gaps | `interpolate_gaps.py` | `Interpolated_data/<file>/traj_XXXXX.csv` | every trajectory sampled every 10 ms |
 | 4. filter | `filter_trajectories.py` | `Filtered_data/<file>/traj_XXXXX.csv` | 2 385 trajectories kept |
 | 5. benchmark | `make_benchmark.py` | `Benchmark/traj_XXXXX.csv` | the 20 longest trajectories (test set) |
+| 6. ML dataset | `make_ml_dataset.py` | `ML_dataset/{train,val,test}.npz`, `norm.json`, `splits.json` | train / validation / test split for learned models |
 
 Checks: `validate_stitching.py`, `validate_interpolation.py`; visual check: `plot_trajectories.py`.
 
@@ -121,3 +122,36 @@ statistics of every trajectory and whether it was kept.
 
 The **20 longest** filtered trajectories (39–106 s, 17.2 min in total) are frozen in `Benchmark/`. Every algorithm
 is evaluated on exactly these; training data (`Algorytms/common/data.py: train_set`) is the other 2 365 trajectories.
+
+## 6. Dataset for learned models (GRU, linear autoregression, ...)
+
+`make_ml_dataset.py` → `ML_dataset/`. Split by **whole trajectories**:
+
+| split | trajectories | frames | flight time | median / max duration | use |
+|---|---|---|---|---|---|
+| train | 2 010 | 1 187 824 | 198 min | 3.3 s / 38 s | fitting |
+| validation | 355 | 206 241 | 34 min | 3.2 s / 33 s | early stopping, hyper-parameters |
+| test | 20 | 103 005 | 17 min | 44.7 s / 106 s | the benchmark (same as Kalman / particle filter), final score only |
+
+- The validation set is 15 % of the non-benchmark trajectories, drawn **per duration decile** (seed 0), so it has
+  the same mix of short and long flights as the training set.
+- Early stopping uses the **validation** set, never the test set: choosing the stopping point on the test set
+  would leak it into the model.
+- Each `.npz` holds all trajectories of the split concatenated: `pos` (N, 3) cm, `disp` (N, 3) frame-to-frame
+  displacement (0 on the first frame of each trajectory), `measured` (N,), `offsets` (trajectory boundaries), `ids`.
+- `norm.json`: per-axis displacement std of the **training** split: 0.349 / 0.250 / 0.434 cm (x / y / z);
+  the network input is `disp / std`. The mean displacement is ~0 (≤ 0.012 cm) and is not subtracted.
+
+Windows are cut by `Algorytms/common/ml_data.py: make_windows(split, window, horizon)`: input = the last `window`
+normalised displacements up to the origin frame, target = the next `horizon` displacements, plus a mask of which
+target frames are real measurements (interpolated frames may be in the input, never learned as targets). The origin
+frame must be measured and the window must not cross a trajectory boundary. With window 20:
+
+| split | samples, horizon 1 | samples, horizon 10 (measured target steps) |
+|---|---|---|
+| train | 828 426 | 940 143 (85.7 %) |
+| validation | 143 228 | 162 641 (85.7 %) |
+| test | 73 755 | 84 347 (86.2 %) |
+
+The final comparison with the other algorithms is still done with the common benchmark protocol
+(`Algorytms/common/evaluation.py`, horizons 10 ms – 5 s); the test windows are only for quick loss checks.

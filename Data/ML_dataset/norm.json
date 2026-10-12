@@ -1,0 +1,13 @@
+{
+  "disp_std_cm": [
+    0.34881383180618286,
+    0.25023847818374634,
+    0.4342131018638611
+  ],
+  "disp_mean_cm": [
+    -0.0016654966166242957,
+    -0.007309103384613991,
+    0.011493392288684845
+  ],
+  "note": "per-axis statistics of frame-to-frame displacements, training split only"
+}

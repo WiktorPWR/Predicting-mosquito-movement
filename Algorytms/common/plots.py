@@ -66,17 +66,47 @@ def plot_error_over_time(traj, origins, err, steps, title, path):
     fig.tight_layout(); fig.savefig(path, dpi=110, facecolor=SURFACE); plt.close(fig)
 
 
-def plot_model_comparison(stats_by_model, path, col="mean_cm", label="mean error"):
-    fig, ax = _fig(figsize=(10, 5.5))
+def plot_model_comparison(stats_by_model, path, col="mean_cm", label="mean error", y_max_cm=1000):
+    """Error vs horizon, one line per model; the y axis is clipped at y_max_cm so a diverging model
+    does not squash the others."""
+    fig, ax = _fig(figsize=(11, 5.5))
+    clipped = False
     for k, (name, st) in enumerate(stats_by_model.items()):
         ax.plot(st["horizon_s"], st[col], color=SERIES[k], lw=2, label=name)
+        clipped |= bool(st[col].max() > y_max_cm)
     ax.set_yscale("log")
+    if clipped:
+        ax.set_ylim(top=y_max_cm)
     ax.set_xlim(0, max(st["horizon_s"].max() for st in stats_by_model.values()))
     ax.set_xlabel("prediction horizon [s]", color=INK2)
     ax.set_ylabel(f"{label} [cm] (log scale)", color=INK2)
-    ax.set_title(f"Model comparison: {label} vs prediction horizon", color=INK, loc="left")
+    ax.set_title(f"Model comparison: {label} vs prediction horizon"
+                 + (f" (axis clipped at {y_max_cm / 100:g} m)" if clipped else ""), color=INK, loc="left")
     _style(ax)
-    ax.legend(frameon=False, labelcolor=INK, loc="lower right")
+    ax.legend(frameon=False, labelcolor=INK, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=9)
+    fig.tight_layout(); fig.savefig(path, dpi=120, facecolor=SURFACE); plt.close(fig)
+
+
+def plot_model_ratio(stats_by_model, reference, path, col="mean_cm", lo=0.5, hi=3.0):
+    """Each model's error divided by the reference model's error at the same horizon (log y, clipped)."""
+    ref = stats_by_model[reference][col].to_numpy()
+    fig, ax = _fig(figsize=(11, 5.5))
+    for k, (name, st) in enumerate(stats_by_model.items()):
+        ax.plot(st["horizon_s"], np.clip(st[col].to_numpy() / ref, lo, hi), color=SERIES[k],
+                lw=3 if name == reference else 2, label=name)
+    ax.set_yscale("log")
+    ax.set_ylim(lo, hi)
+    ticks = [t for t in (0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 2, 3) if lo <= t <= hi]
+    ax.set_yticks(ticks, [f"{t:g}" for t in ticks]); ax.minorticks_off()
+    ax.set_xscale("log")
+    xt = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5]
+    ax.set_xticks(xt, [f"{t:g}" for t in xt])
+    ax.set_xlabel("prediction horizon [s] (log)", color=INK2)
+    ax.set_ylabel(f"error / {reference} error", color=INK2)
+    ax.set_title(f"Model comparison relative to {reference} (below 1 = better; clipped at {hi:g})",
+                 color=INK, loc="left", fontsize=11)
+    _style(ax)
+    ax.legend(frameon=False, labelcolor=INK, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=9)
     fig.tight_layout(); fig.savefig(path, dpi=120, facecolor=SURFACE); plt.close(fig)
 
 
@@ -205,4 +235,22 @@ def plot_particles_effect(df, path, steps=(1, 10, 100)):
     axes[-1].legend(frameon=False, labelcolor=INK, fontsize=8, loc="center left", bbox_to_anchor=(1.0, 0.5))
     fig.suptitle("Particle filter: effect of the number of particles and of the kept best fraction",
                  color=INK, x=0.01, ha="left", fontsize=12)
+    fig.tight_layout(); fig.savefig(path, dpi=120, facecolor=SURFACE); plt.close(fig)
+
+
+def plot_training_curve(history, best_epoch, title, path):
+    """Left: train / validation loss per epoch (log). Right: validation one-step error in cm."""
+    ep = [h["epoch"] for h in history]
+    fig, (a1, a2) = _fig(1, 2, figsize=(11, 4.2))
+    a1.plot(ep, [h["train_loss"] for h in history], color=SERIES[0], lw=1.8, marker="o", ms=3, label="train")
+    a1.plot(ep, [h["val_loss"] for h in history], color=SERIES[1], lw=1.8, marker="o", ms=3, label="validation")
+    a1.set_yscale("log"); a1.set_ylabel("MSE (normalised target, log)", color=INK2)
+    a1.legend(frameon=False, labelcolor=INK)
+    a2.plot(ep, [h["val_err_1step_cm"] for h in history], color=SERIES[1], lw=1.8, marker="o", ms=3)
+    a2.set_ylabel("validation one-step error [cm]", color=INK2)
+    for a in (a1, a2):
+        a.axvline(best_epoch, color=MUTED, lw=1, ls="--")
+        a.set_xlabel("epoch", color=INK2)
+        _style(a)
+    fig.suptitle(title + f"  (dashed: best epoch {best_epoch})", color=INK, x=0.01, ha="left", fontsize=12)
     fig.tight_layout(); fig.savefig(path, dpi=120, facecolor=SURFACE); plt.close(fig)
