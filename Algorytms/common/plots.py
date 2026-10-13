@@ -254,3 +254,25 @@ def plot_training_curve(history, best_epoch, title, path):
         _style(a)
     fig.suptitle(title + f"  (dashed: best epoch {best_epoch})", color=INK, x=0.01, ha="left", fontsize=12)
     fig.tight_layout(); fig.savefig(path, dpi=120, facecolor=SURFACE); plt.close(fig)
+
+
+def plot_gru_experiments(experiments, ref_stats, ref_name, path, col="mean_cm", lo=0.5, hi=3.0):
+    """One panel per experiment (e.g. network size, window, output): each variant's error / reference error."""
+    ref = ref_stats[col].to_numpy()
+    fig, axes = _fig(1, len(experiments), figsize=(5.2 * len(experiments), 4.8), sharey=True)
+    xt = [0.01, 0.05, 0.1, 0.5, 1, 5]
+    ticks = [t for t in (0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.25, 1.5, 2, 3) if lo <= t <= hi]
+    for ax, (title, runs) in zip(np.atleast_1d(axes), experiments.items()):
+        for k, (name, st) in enumerate(runs.items()):
+            ax.plot(st["horizon_s"], np.clip(st[col].to_numpy() / ref, lo, hi), color=SERIES[k], lw=2, label=name)
+        ax.axhline(1, color=AXIS, lw=1, zorder=0)
+        ax.set_xscale("log"); ax.set_yscale("log"); ax.set_ylim(lo, hi)
+        ax.set_xticks(xt, [f"{t:g}" for t in xt]); ax.set_yticks(ticks, [f"{t:g}" for t in ticks]); ax.minorticks_off()
+        ax.set_title(title, color=INK, loc="left", fontsize=11)
+        ax.set_xlabel("prediction horizon [s] (log)", color=INK2)
+        ax.legend(frameon=False, labelcolor=INK, fontsize=9, loc="upper left")
+        _style(ax)
+    np.atleast_1d(axes)[0].set_ylabel(f"mean error / {ref_name} (below 1 = better)", color=INK2)
+    fig.suptitle("GRU (velocity input only) experiments, relative to the Kalman filter", color=INK, x=0.01,
+                 ha="left", fontsize=12)
+    fig.tight_layout(); fig.savefig(path, dpi=120, facecolor=SURFACE); plt.close(fig)

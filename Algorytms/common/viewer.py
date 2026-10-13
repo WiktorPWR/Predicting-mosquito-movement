@@ -24,8 +24,11 @@ def _r(a, nd=2):
 
 
 def model_names():
-    """Result folders (relative to Results/, e.g. 'kalman/cv_0.336mps') that contain viewer data."""
-    return sorted({p.parent.relative_to(RESULTS_DIR).as_posix() for p in RESULTS_DIR.rglob("viewer_data")})
+    """Result folders (relative to Results/, e.g. 'kalman/cv_0.336mps') shown in the viewer: the main models of
+    compare_models.MAIN_MODELS that have viewer data (at most 8, one colour each)."""
+    from Algorytms.compare_models import MAIN_MODELS
+    have = {p.parent.relative_to(RESULTS_DIR).as_posix() for p in RESULTS_DIR.rglob("viewer_data")}
+    return [m for m in MAIN_MODELS if m in have]
 
 
 def model_params(name):

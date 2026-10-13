@@ -15,7 +15,18 @@ import pandas as pd
 
 from Algorytms.common.data import FRAME_S, RESULTS_DIR
 from Algorytms.common.evaluation import TABLE_STEPS
-from Algorytms.common.plots import plot_model_comparison, plot_model_ratio
+from Algorytms.common.plots import plot_gru_experiments, plot_model_comparison, plot_model_ratio
+
+# Figures and the 3D viewer show at most 8 models (one colour each); the tables list every model.
+MAIN_MODELS = ["kalman/cv_0.336mps", "particle/best", "baselines/constant_velocity", "baselines/linear_ar",
+               "gru/disp_h32", "gru/disp_h32_w10", "gru/disp_h32_k10", "gru/full_h32"]
+# GRU experiments (velocity-only GRU, one change at a time against hidden 32 / window 20 / 1-step output)
+GRU_EXPERIMENTS = {
+    "network size (hidden)": {"16": "gru/disp_h16", "32": "gru/disp_h32", "64": "gru/disp_h64"},
+    "input window (frames)": {"10 (0.1 s)": "gru/disp_h32_w10", "20 (0.2 s)": "gru/disp_h32",
+                              "50 (0.5 s)": "gru/disp_h32_w50", "100 (1 s)": "gru/disp_h32_w100"},
+    "output": {"1 step, iterated": "gru/disp_h32", "10 steps at once": "gru/disp_h32_k10"},
+}
 
 METRICS = {"mean_cm": "Mean error [cm]", "median_cm": "Median error [cm]", "p95_cm": "95th percentile [cm]",
            "max_cm": "Maximum error [cm]"}
@@ -35,11 +46,16 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     stats = {label(p.parent): pd.read_csv(p) for p in sorted(RESULTS_DIR.rglob("horizon_stats.csv"))
              if "comparison" not in p.parts}
-    plot_model_comparison(stats, out / "mean_error_vs_horizon.png")
-    plot_model_comparison(stats, out / "median_error_vs_horizon.png", col="median_cm", label="median error")
-    ref = next((n for n in stats if n.startswith("Kalman")), None)
+    main_stats = {label(RESULTS_DIR / m): pd.read_csv(RESULTS_DIR / m / "horizon_stats.csv")
+                  for m in MAIN_MODELS if (RESULTS_DIR / m / "horizon_stats.csv").exists()}
+    plot_model_comparison(main_stats, out / "mean_error_vs_horizon.png")
+    plot_model_comparison(main_stats, out / "median_error_vs_horizon.png", col="median_cm", label="median error")
+    ref = next((n for n in main_stats if n.startswith("Kalman")), None)
     if ref:
-        plot_model_ratio(stats, ref, out / "relative_to_kalman.png")
+        plot_model_ratio(main_stats, ref, out / "relative_to_kalman.png")
+        exps = {title: {name: pd.read_csv(RESULTS_DIR / d / "horizon_stats.csv") for name, d in runs.items()
+                        if (RESULTS_DIR / d / "horizon_stats.csv").exists()} for title, runs in GRU_EXPERIMENTS.items()}
+        plot_gru_experiments(exps, main_stats[ref], ref, RESULTS_DIR / "gru" / "experiments_relative_to_kalman.png")
 
     rows, md = [], ["# Model comparison on the benchmark\n",
                     "20 benchmark trajectories, every measured frame after 1 s of history is a prediction origin; "

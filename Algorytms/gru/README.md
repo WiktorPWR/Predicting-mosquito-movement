@@ -1,6 +1,11 @@
 # GRU (recurrent neural network)
 
-Four small GRU networks that differ only in **what they see and what they predict**, trained on the same data and
+> **Selected model: GRU with 10-step output (`Results/gru/disp_h32_k10/`)** — velocity input only, hidden 32,
+> window 20, predicts the next 10 displacements at once. It is the GRU that enters the final benchmark of all
+> algorithms. Load it with `Algorytms.gru.model.load("Results/gru/disp_h32_k10/model.pt", name="gru_k10")`.
+
+Four small GRU networks that differ in **what they see and what they predict**, plus experiments with the
+network size, input window and a 10-step output (see [Experiments](#experiments-network-size-input-window-multi-step-output)), trained on the same data and
 compared with each other, the reference models ([../baselines/](../baselines/README.md)) and the Kalman / particle
 filters on the benchmark. Results: [Results/gru/](../../Results/gru/); all models:
 [Results/comparison/](../../Results/comparison/comparison_table.md).
@@ -101,8 +106,47 @@ Full tables: `summary.md` in each result folder; figure `relative_to_kalman.png`
   worse from 0.1 s on**, and much worse at long horizons (56 vs 39 cm at 1 s). The extra inputs help to fit the next
   frame, but when the network is iterated on its own predictions the recomputed acceleration feeds errors back
   faster, and the position input lets it rely on where the mosquito is rather than on how it moves.
-- **Every GRU loses to the Kalman filter beyond ~0.35 s** (velocity only: 10–16 % worse from 0.5 s on). They are
-  trained one step ahead and iterated up to 500 times, so small systematic errors accumulate (a milder version of
-  the linear autoregression's divergence), and a 0.2 s window holds no information about a turn seconds ahead.
-- Next steps from the plan: hidden size 16 / 32 / 64, window length, and a direct 10-step output (trained for
-  multi-step prediction instead of iterating the one-step model), which targets exactly the last point.
+- **The reference GRU (hidden 32, window 20, one-step output) loses to the Kalman filter beyond ~0.35 s**
+  (10–16 % worse from 0.5 s on). It is trained one step ahead and iterated up to 500 times, so small systematic
+  errors accumulate (a milder version of the linear autoregression's divergence). The experiments below show
+  which changes fix that.
+
+## Experiments: network size, input window, multi-step output
+
+Velocity-only GRU, **one change at a time** against the reference (hidden 32, window 20 frames, one-step output).
+Same data, training rules (≥ 20, ≤ 40 epochs, early stopping on validation) and benchmark as above.
+Command: `train disp --hidden H --window W --steps K`; folders `disp_h<H>[_w<W>][_k<K>]`.
+Figure: [experiments_relative_to_kalman.png](../../Results/gru/experiments_relative_to_kalman.png).
+
+Training was interrupted once (stopped at a fixed time) and resumed from per-epoch checkpoints
+(`checkpoint.pt`: weights, optimiser, random state, history); a resumed run continues exactly where it stopped.
+
+| variant | parameters | epochs (best) | val. 1-step | 0.01 s | 0.05 s | 0.1 s | 0.2 s | 0.5 s | 1 s | 2 s | 5 s |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| hidden 16 | 1 059 | 40 (40) | 0.123 cm | 0.11 | 0.64 | 1.40 | 3.58 | 14.5 | 40.7 | 100.3 | 283 |
+| **reference** (hidden 32, window 20) | 3 651 | 40 (38) | 0.114 cm | 0.11 | 0.55 | 1.21 | 3.35 | 14.2 | 38.9 | 94.2 | 272 |
+| hidden 64 | 13 443 | 40 (38) | 0.103 cm | **0.10** | 0.48 | 1.08 | 3.19 | 15.1 | 47.2 | 147.6 | 540 |
+| window 10 (0.1 s) | 3 651 | 40 (40) | 0.118 cm | 0.11 | 0.57 | 1.20 | 3.18 | 12.9 | 33.6 | **79.3** | **227** |
+| window 50 (0.5 s) | 3 651 | 40 (40) | 0.110 cm | **0.10** | 0.51 | 1.11 | 3.21 | 14.8 | 47.2 | 145.6 | 541 |
+| window 100 (1 s) | 3 651 | 40 (39) | 0.111 cm | **0.10** | 0.51 | 1.08 | 3.00 | 12.8 | 36.8 | 94.8 | 283 |
+| **10-step output** | 4 542 | 39 (34) | 0.118 cm | 0.11 | **0.47** | **0.98** | **2.62** | **10.9** | **32.6** | 94.5 | 343 |
+| *Kalman CV* | | | | *0.17* | *0.84* | *1.76* | *3.98* | *13.1* | *33.6* | *83.5* | *248* |
+
+Mean position error [cm] on the benchmark; best GRU per horizon in bold.
+
+- **10 steps at once is the best model of the whole project up to ~1 s**: 44 % better than the Kalman filter at
+  0.1 s (0.98 vs 1.76 cm), 17 % at 0.5 s (10.9 vs 13.1 cm) and 3 % at 1 s (32.6 vs 33.6 cm). Trained to predict
+  0.1 s ahead directly, it is iterated 10× less often, so far fewer errors feed back. Beyond ~1 s it falls behind
+  (each block of 10 is still fed back) and at 5 s it is 38 % worse than Kalman.
+- **More capacity (hidden 64, window 50) fits the next frames better but iterates worse.** Both are the best one-step
+  models (0.10 cm) and 8–11 % better than the reference at 0.1 s, but from ~0.5 s on their error grows much faster
+  (47 cm at 1 s, 5.4 m at 5 s, twice the Kalman filter): a more flexible model reproduces its own small errors more
+  confidently when fed its own predictions.
+- **A short window (10 frames) is the most stable iterated model**: as good as the reference up to 0.1 s and the only
+  one-step GRU that matches the Kalman filter from 0.5 s on (12.9 / 33.6 / 79.3 / 227 cm at 0.5 / 1 / 2 / 5 s; 8 %
+  better than Kalman at 5 s). Less history to over-fit means smoother, more cautious extrapolation.
+- **A long window (100 frames = 1 s) helps short horizons** (1.08 cm at 0.1 s, 12.8 cm at 0.5 s) without the
+  long-horizon blow-up of window 50, but costs ~5× training time (~9 min per epoch) and inference.
+- **Hidden 16 (1 059 parameters) is only 0–16 % worse than hidden 32** up to 1 s: a realistic candidate for the
+  Raspberry Pi.
+- Practical choice: **10-step output for horizons up to ~1 s**, the Kalman filter (or the window-10 GRU) beyond.

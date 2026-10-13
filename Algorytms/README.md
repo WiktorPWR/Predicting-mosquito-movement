@@ -9,8 +9,8 @@ Code only; results go to [../Results/](../Results/). Run everything from the rep
 | [kalman/](kalman/README.md) | Kalman filter (constant velocity) |
 | [particle/](particle/README.md) | particle filter |
 | [baselines/](baselines/README.md) | constant velocity, linear autoregression |
-| [gru/](gru/README.md) | GRU networks (displacement / position input) |
-| `compare_models.py` | one table and figure comparing all evaluated algorithms → `Results/comparison/` |
+| [gru/](gru/README.md) | GRU networks: four input representations, network size, window length, 10-step output |
+| `compare_models.py` | tables of all evaluated models and figures of the 8 main ones → `Results/comparison/`; GRU experiment figure → `Results/gru/` |
 
 ## Evaluation protocol (same for every algorithm)
 
