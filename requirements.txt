@@ -1,0 +1,15 @@
+# Everything needed to run the whole project (data processing, all algorithms, evaluation, figures, viewer).
+#   pip install -r requirements.txt
+# torch comes from the CPU-only PyTorch index (no CUDA, ~200 MB instead of ~2 GB); the line below makes pip
+# look there as well.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+numpy>=1.26        # everything
+pandas>=2.1        # CSV data, tables
+scipy>=1.11        # trajectory stitching (sparse bipartite matching)
+matplotlib>=3.7    # figures (PNG files, no screen needed)
+plotly>=5.0        # interactive 3D viewer
+torch>=2.1         # GRU / LSTM networks (CPU)
+
+# Versions used to produce the results in Results/:
+# Python 3.13, numpy 2.5.3, pandas 3.0.6, scipy 1.18.1, matplotlib 3.11.2, plotly 7.1.0, torch 2.14.1+cpu

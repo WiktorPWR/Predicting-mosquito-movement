@@ -10,3 +10,9 @@ Data/Filtered_data/
 __pycache__/
 # interactive viewer: ~50 MB, regenerate with python -m Algorytms.common.viewer
 Results/viewer/
+Results/lstm/logs/
+Results/lstm/*/seed*/checkpoint.pt
+# server bundle / results archive (python -m server.make_bundle)
+lstm_server_bundle.zip
+lstm_results.tar.gz
+.venv-server/

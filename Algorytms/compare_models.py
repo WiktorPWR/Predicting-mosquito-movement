@@ -17,9 +17,10 @@ from Algorytms.common.data import FRAME_S, RESULTS_DIR
 from Algorytms.common.evaluation import TABLE_STEPS
 from Algorytms.common.plots import plot_gru_experiments, plot_model_comparison, plot_model_ratio
 
-# Figures and the 3D viewer show at most 8 models (one colour each); the tables list every model.
+# Figures and the 3D viewer show the selected model of every algorithm (at most 8, one colour each): the best
+# GRU (10-step output) and the best LSTM (LSTM B, Algorytms/lstm); the tables list every evaluated model.
 MAIN_MODELS = ["kalman/cv_0.336mps", "particle/best", "baselines/constant_velocity", "baselines/linear_ar",
-               "gru/disp_h32", "gru/disp_h32_w10", "gru/disp_h32_k10", "gru/full_h32"]
+               "gru/disp_h32_k10", "lstm/best"]
 # GRU experiments (velocity-only GRU, one change at a time against hidden 32 / window 20 / 1-step output)
 GRU_EXPERIMENTS = {
     "network size (hidden)": {"16": "gru/disp_h16", "32": "gru/disp_h32", "64": "gru/disp_h64"},

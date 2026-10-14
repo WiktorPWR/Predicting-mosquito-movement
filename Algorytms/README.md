@@ -10,6 +10,7 @@ Code only; results go to [../Results/](../Results/). Run everything from the rep
 | [particle/](particle/README.md) | particle filter |
 | [baselines/](baselines/README.md) | constant velocity, linear autoregression |
 | [gru/](gru/README.md) | GRU networks: four input representations, network size, window length, 10-step output |
+| [lstm/](lstm/README.md) | LSTM vs GRU study: LSTM variants of the selected 10-step GRU, 5 seeds each |
 | `compare_models.py` | tables of all evaluated models and figures of the 8 main ones → `Results/comparison/`; GRU experiment figure → `Results/gru/` |
 
 ## Evaluation protocol (same for every algorithm)
