@@ -1,0 +1,53 @@
+{
+  "model": "transformer",
+  "d": 20,
+  "ff": 40,
+  "heads": 2,
+  "layers": 1,
+  "window": 100,
+  "patch": 10,
+  "steps": 10,
+  "disp_std": [
+    0.34881383180618286,
+    0.25023847818374634,
+    0.4342131018638611
+  ],
+  "variant": "tf_t3",
+  "seed": 3,
+  "selected_by": "lowest validation loss",
+  "val_loss_per_seed": {
+    "0": 0.13615731195661032,
+    "1": 0.134997034325085,
+    "2": 0.13536039568834146,
+    "3": 0.13495253399479443,
+    "4": 0.13496159147562026
+  },
+  "best_epoch": 22,
+  "name": "transformer_best",
+  "label": "Transformer (velocity input, window 1 s in 10 patches, d 20, 10-step output)",
+  "test_trajectories": [
+    2285,
+    2448,
+    3000,
+    433,
+    2218,
+    2172,
+    835,
+    791,
+    3298,
+    2724,
+    1436,
+    1250,
+    1934,
+    1187,
+    3103,
+    1727,
+    1340,
+    1564,
+    2094,
+    471
+  ],
+  "max_h": 500,
+  "min_history": 100,
+  "origin_stride": 1
+}

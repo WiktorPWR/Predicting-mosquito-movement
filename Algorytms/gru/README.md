@@ -134,7 +134,9 @@ Training was interrupted once (stopped at a fixed time) and resumed from per-epo
 
 Mean position error [cm] on the benchmark; best GRU per horizon in bold.
 
-- **10 steps at once is the best model of the whole project up to ~1 s**: 44 % better than the Kalman filter at
+- **10 steps at once is the best GRU, best of all models up to ~1 s at the time of these experiments.** It was later
+  overtaken by the LSTM ([../lstm/](../lstm/README.md)) and, beyond 0.87 s, by the transformer; see
+  [Results/benchmark/](../../Results/benchmark/README.md). It is 44 % better than the Kalman filter at
   0.1 s (0.98 vs 1.76 cm), 17 % at 0.5 s (10.9 vs 13.1 cm) and 3 % at 1 s (32.6 vs 33.6 cm). Trained to predict
   0.1 s ahead directly, it is iterated 10× less often, so far fewer errors feed back. Beyond ~1 s it falls behind
   (each block of 10 is still fed back) and at 5 s it is 38 % worse than Kalman.

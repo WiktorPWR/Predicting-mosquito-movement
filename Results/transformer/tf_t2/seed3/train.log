@@ -1,0 +1,26 @@
+2026-10-14 19:33:20  tf_t2 seed 3: transformer {'d': 32, 'ff': 64, 'heads': 2, 'layers': 1, 'window': 20, 'patch': 1} batch 64 lr 0.001 warm-up 0, 10366 parameters, 1 thread(s); train 940143 windows, val 162641
+2026-10-14 19:36:58    epoch  1: train 0.15979  val 0.14734  val 1-step error 0.1326 cm  (216 s)  no improvement for 0
+2026-10-14 19:40:32    epoch  2: train 0.14880  val 0.14598  val 1-step error 0.1316 cm  (215 s)  no improvement for 0
+2026-10-14 19:44:05    epoch  3: train 0.14755  val 0.14580  val 1-step error 0.1311 cm  (212 s)  no improvement for 0
+2026-10-14 19:47:37    epoch  4: train 0.14673  val 0.14403  val 1-step error 0.1308 cm  (212 s)  no improvement for 0
+2026-10-14 19:51:08    epoch  5: train 0.14617  val 0.14333  val 1-step error 0.1297 cm  (212 s)  no improvement for 0
+2026-10-14 19:54:40    epoch  6: train 0.14570  val 0.14315  val 1-step error 0.1305 cm  (212 s)  no improvement for 0
+2026-10-14 19:58:12    epoch  7: train 0.14538  val 0.14287  val 1-step error 0.1292 cm  (212 s)  no improvement for 0
+2026-10-14 20:01:44    epoch  8: train 0.14509  val 0.14392  val 1-step error 0.1317 cm  (212 s)  no improvement for 1
+2026-10-14 20:05:16    epoch  9: train 0.14482  val 0.14226  val 1-step error 0.1297 cm  (212 s)  no improvement for 0
+2026-10-14 20:08:48    epoch 10: train 0.14462  val 0.14209  val 1-step error 0.1298 cm  (211 s)  no improvement for 0
+2026-10-14 20:12:19    epoch 11: train 0.14445  val 0.14222  val 1-step error 0.1293 cm  (212 s)  no improvement for 1
+2026-10-14 20:15:52    epoch 12: train 0.14428  val 0.14238  val 1-step error 0.1295 cm  (212 s)  no improvement for 2
+2026-10-14 20:19:24    epoch 13: train 0.14423  val 0.14128  val 1-step error 0.1290 cm  (213 s)  no improvement for 0
+2026-10-14 20:22:56    epoch 14: train 0.14406  val 0.14192  val 1-step error 0.1292 cm  (212 s)  no improvement for 1
+2026-10-14 20:26:30    epoch 15: train 0.14392  val 0.14120  val 1-step error 0.1285 cm  (213 s)  no improvement for 0
+2026-10-14 20:29:59    epoch 16: train 0.14387  val 0.14070  val 1-step error 0.1292 cm  (210 s)  no improvement for 0
+2026-10-14 20:33:33    epoch 17: train 0.14381  val 0.14183  val 1-step error 0.1292 cm  (213 s)  no improvement for 1
+2026-10-14 20:37:05    epoch 18: train 0.14370  val 0.14169  val 1-step error 0.1309 cm  (212 s)  no improvement for 2
+2026-10-14 20:40:39    epoch 19: train 0.14365  val 0.14006  val 1-step error 0.1284 cm  (214 s)  no improvement for 0
+2026-10-14 20:44:08    epoch 20: train 0.14355  val 0.14153  val 1-step error 0.1298 cm  (209 s)  no improvement for 1
+2026-10-14 20:47:23    epoch 21: train 0.14349  val 0.14095  val 1-step error 0.1290 cm  (194 s)  no improvement for 2
+2026-10-14 20:50:39    epoch 22: train 0.14346  val 0.14186  val 1-step error 0.1299 cm  (196 s)  no improvement for 3
+2026-10-14 20:53:56    epoch 23: train 0.14340  val 0.14114  val 1-step error 0.1292 cm  (197 s)  no improvement for 4
+2026-10-14 20:57:11    epoch 24: train 0.14332  val 0.14146  val 1-step error 0.1294 cm  (195 s)  no improvement for 5
+2026-10-14 20:57:11  finished: best epoch 19, val 1-step error 0.1284 cm

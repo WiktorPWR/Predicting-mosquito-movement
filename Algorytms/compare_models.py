@@ -18,9 +18,10 @@ from Algorytms.common.evaluation import TABLE_STEPS
 from Algorytms.common.plots import plot_gru_experiments, plot_model_comparison, plot_model_ratio
 
 # Figures and the 3D viewer show the selected model of every algorithm (at most 8, one colour each): the best
-# GRU (10-step output) and the best LSTM (LSTM B, Algorytms/lstm); the tables list every evaluated model.
+# GRU (10-step output), the best LSTM (LSTM B) and the best transformer (T3); the tables list every evaluated model.
+# The order fixes the colours (also used by Algorytms/benchmark.py).
 MAIN_MODELS = ["kalman/cv_0.336mps", "particle/best", "baselines/constant_velocity", "baselines/linear_ar",
-               "gru/disp_h32_k10", "lstm/best"]
+               "gru/disp_h32_k10", "lstm/best", "transformer/best"]
 # GRU experiments (velocity-only GRU, one change at a time against hidden 32 / window 20 / 1-step output)
 GRU_EXPERIMENTS = {
     "network size (hidden)": {"16": "gru/disp_h16", "32": "gru/disp_h32", "64": "gru/disp_h64"},
@@ -53,7 +54,7 @@ def main():
     plot_model_comparison(main_stats, out / "median_error_vs_horizon.png", col="median_cm", label="median error")
     ref = next((n for n in main_stats if n.startswith("Kalman")), None)
     if ref:
-        plot_model_ratio(main_stats, ref, out / "relative_to_kalman.png")
+        plot_model_ratio(main_stats, ref, out / "relative_to_kalman.png", lo=0.4)
         exps = {title: {name: pd.read_csv(RESULTS_DIR / d / "horizon_stats.csv") for name, d in runs.items()
                         if (RESULTS_DIR / d / "horizon_stats.csv").exists()} for title, runs in GRU_EXPERIMENTS.items()}
         plot_gru_experiments(exps, main_stats[ref], ref, RESULTS_DIR / "gru" / "experiments_relative_to_kalman.png")

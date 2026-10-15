@@ -13,6 +13,8 @@ Results/viewer/
 Results/lstm/logs/
 Results/lstm/*/seed*/checkpoint.pt
 # server bundle / results archive (python -m server.make_bundle)
-lstm_server_bundle.zip
-lstm_results.tar.gz
+*_server_bundle.zip
+*_results.tar.gz
 .venv-server/
+Results/transformer/logs/
+Results/transformer/*/seed*/checkpoint.pt

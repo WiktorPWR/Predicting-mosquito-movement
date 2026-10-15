@@ -3,7 +3,8 @@
 For each test trajectory one page is written to Results/viewer/. Moving the
 time slider (or clicking the error / speed charts) shows the mosquito's recent
 path, the true future and every model's predicted future for the chosen
-horizon. Pages load plotly from a local plotly.min.js, so they work offline.
+horizon. The algorithm switches under the header show / hide a model in every chart at once (the choice is
+kept when switching trajectories). Pages load plotly from a local plotly.min.js, so they work offline.
 
 Usage (from the repo root, after running at least one algorithm):
     .venv/Scripts/python -m Algorytms.common.viewer
@@ -100,12 +101,18 @@ main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;p
 #p3d{height:640px}#perr{height:330px}#pspd{height:200px}#pcloud{height:420px}
 #info{font-size:13px;line-height:1.6;color:var(--ink2);padding:4px 8px}#info b{color:var(--ink);font-variant-numeric:tabular-nums}
 .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+#algos{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:13px}
+#algos .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px 3px 6px;border:1px solid var(--border);border-radius:14px;cursor:pointer;user-select:none;color:var(--ink)}
+#algos .chip input{margin:0}#algos .chip.off{color:var(--muted);background:var(--plane)}#algos .chip.off .sw{opacity:.25}
+#algos button{padding:2px 8px}
 @media (max-width:900px){main{grid-template-columns:1fr}#p3d{height:460px}}
 </style></head><body>
 <header><h1 id="title"></h1>
 <label>Trajectory <select id="tsel"></select></label>
 <label>Prediction horizon <select id="hsel"></select></label>
 <label><input type="checkbox" id="showall" checked> full trajectory in background</label></header>
+<div id="algos"><span style="color:var(--ink2)">Algorithms:</span><span id="chips" style="display:contents"></span>
+<button id="allon">all</button><button id="alloff">none</button></div>
 <div id="controls"><button id="play">▶</button><button id="prev">◀ 0.1 s</button><button id="next">0.1 s ▶</button>
 <input type="range" id="slider" min="0" value="0"><span id="tlabel"></span></div>
 <main><div class="card"><div id="p3d"></div></div>
@@ -125,10 +132,26 @@ const col=(a,k)=>a.map(r=>r[k]);
 const BOX=[0,1,2].map(a=>{const v=col(D.pos,a);return [Math.min(...v)-50,Math.max(...v)+50]});
 const SPAN=BOX.map(b=>b[1]-b[0]), ASPECT={x:SPAN[0]/Math.max(...SPAN),y:SPAN[1]/Math.max(...SPAN),z:SPAN[2]/Math.max(...SPAN)};
 const LBL=nm=>D.models[nm].label||nm;
-document.getElementById("title").textContent="Trajectory "+D.tid+" · "+(N*dt).toFixed(1)+" s · "+names.map(LBL).join(" vs ");
+// which algorithms are shown: from the link (#hide=...) when coming from another trajectory, else remembered
+let hidden=new Set();
+try{const h=decodeURIComponent(location.hash).match(/hide=([^&]*)/);
+  hidden=new Set(h?h[1].split("|").filter(Boolean):JSON.parse(localStorage.getItem("viewer_hidden")||"[]"))}catch(e){}
+const vis=nm=>!hidden.has(nm), shown=()=>names.filter(vis);
+function saveHidden(){try{localStorage.setItem("viewer_hidden",JSON.stringify([...hidden]))}catch(e){}
+  history.replaceState(null,"","#hide="+encodeURIComponent([...hidden].join("|")))}
+function setTitle(){document.getElementById("title").textContent="Trajectory "+D.tid+" · "+(N*dt).toFixed(1)+" s · "+(shown().map(LBL).join(" vs ")||"no algorithm shown")}
+setTitle();
+const chips=document.getElementById("chips");
+names.forEach((nm,m)=>{const l=document.createElement("label");l.className="chip"+(vis(nm)?"":" off");l.title=nm;
+  l.innerHTML="<input type='checkbox'"+(vis(nm)?" checked":"")+"><span class='sw' style='background:"+C[m]+"'></span>"+LBL(nm);
+  l.querySelector("input").onchange=e=>{e.target.checked?hidden.delete(nm):hidden.add(nm);l.classList.toggle("off",!e.target.checked);redraw()};
+  chips.appendChild(l)});
+function setAll(on){hidden=on?new Set():new Set(names);chips.querySelectorAll(".chip").forEach(l=>{l.querySelector("input").checked=on;l.classList.toggle("off",!on)});redraw()}
+document.getElementById("allon").onclick=()=>setAll(true);document.getElementById("alloff").onclick=()=>setAll(false);
+function redraw(){saveHidden();setTitle();errChart();scene3d();info();cloudPanel()}
 const tsel=document.getElementById("tsel");
 TIDS.forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t;if(t===D.tid)o.selected=true;tsel.appendChild(o)});
-tsel.onchange=()=>{location.href="traj_"+String(tsel.value).padStart(5,"0")+".html"};
+tsel.onchange=()=>{location.href="traj_"+String(tsel.value).padStart(5,"0")+".html#hide="+encodeURIComponent([...hidden].join("|"))};
 const hsel=document.getElementById("hsel");
 steps.forEach((s,k)=>{const o=document.createElement("option");o.value=k;o.textContent=(s*dt).toFixed(2).replace(/\.?0+$/,"")+" s";hsel.appendChild(o)});
 hsel.value=String(steps.indexOf(100)>=0?steps.indexOf(100):0);
@@ -146,9 +169,9 @@ function scene3d(){
   tr.push({type:"scatter3d",mode:"lines",x:col(ps,0),y:col(ps,1),z:col(ps,2),line:{color:INK2,width:5},name:"last 1 s"});
   const fut=P.slice(o,Math.min(N,o+H+1));
   tr.push({type:"scatter3d",mode:"lines",x:col(fut,0),y:col(fut,1),z:col(fut,2),line:{color:INK,width:5,dash:"dash"},name:"true future"});
-  names.forEach((nm,m)=>{const md=D.models[nm];const j=md.view_origins.indexOf(o);if(j<0)return;
+  names.forEach((nm,m)=>{if(!vis(nm))return;const md=D.models[nm];const j=md.view_origins.indexOf(o);if(j<0)return;
     const nk=vsteps.filter(s=>s<=H).length, pr=[P[o]].concat(md.view_preds[j].slice(0,nk));
-    tr.push({type:"scatter3d",mode:"lines",x:col(pr,0),y:col(pr,1),z:col(pr,2),line:{color:C[m],width:6},name:"prediction: "+LBL(nm)});
+    tr.push({type:"scatter3d",mode:"lines",x:col(pr,0),y:col(pr,1),z:col(pr,2),line:{color:C[m],width:6},name:"prediction: "+LBL(nm),showlegend:false});  // colours: algorithm switches
     const e=pr[pr.length-1];
     tr.push({type:"scatter3d",mode:"markers",x:[e[0]],y:[e[1]],z:[e[2]],marker:{color:C[m],size:5},showlegend:false,hoverinfo:"skip"});
     if(md.cloud){const jc=md.view_origins.indexOf(o), cl=md.cloud[jc], T=H*dt, sd=Math.sqrt(md.q*T*T*T/3);
@@ -163,14 +186,15 @@ function scene3d(){
            aspectmode:"manual",aspectratio:ASPECT}},{responsive:true});
 }
 function errRange(k){   // log10 range over all models at horizon k, capped at 10 m
-  let lo=Infinity,hi=0;names.forEach(nm=>D.models[nm].err[k].forEach(v=>{if(v!=null&&v>0){lo=Math.min(lo,v);hi=Math.max(hi,v)}}));
-  return [Math.log10(lo)-0.1,Math.log10(Math.min(hi,1000))+0.1];
+  let lo=Infinity,hi=0;shown().forEach(nm=>D.models[nm].err[k].forEach(v=>{if(v!=null&&v>0){lo=Math.min(lo,v);hi=Math.max(hi,v)}}));
+  return hi>0?[Math.log10(lo)-0.1,Math.log10(Math.min(hi,1000))+0.1]:[-1,3];
 }
 function errChart(){
-  const k=+hsel.value, tr=names.map((nm,m)=>{const md=D.models[nm];
+  const k=+hsel.value, tr=names.map((nm,m)=>[nm,m]).filter(([nm])=>vis(nm)).map(([nm,m])=>{const md=D.models[nm];
     return {type:"scattergl",mode:"lines",x:md.origins.map(o=>o*dt),y:md.err[k],line:{color:C[m],width:1.2},name:LBL(nm),
             hovertemplate:"t=%{x:.2f} s<br>error %{y:.2f} cm<extra>"+LBL(nm)+"</extra>"}});
-  Plotly.react("perr",tr,{...base,title:{text:names.map(LBL).join(", ")+": prediction error at "+hsel.options[hsel.selectedIndex].text+" horizon",font:{size:13},x:0},
+  Plotly.react("perr",tr,{...base,showlegend:false,   // colours as in the algorithm switches above
+    title:{text:"Prediction error at "+hsel.options[hsel.selectedIndex].text+" horizon"+(tr.length?"":" (no algorithm shown)"),font:{size:13},x:0},
     xaxis:axis("flight time [s]"),yaxis:{...axis("error [cm] (log, clipped at 10 m)"),type:"log",range:errRange(k)},shapes:[cursor()]},{responsive:true});
 }
 function spdChart(){
@@ -182,6 +206,7 @@ const CLOUD=names.find(nm=>D.models[nm].cloud);
 if(CLOUD)document.getElementById("cloudcard").style.display="block";
 function cloudPanel(){
   if(!CLOUD)return;
+  document.getElementById("cloudcard").style.display=vis(CLOUD)?"block":"none";if(!vis(CLOUD))return;
   const md=D.models[CLOUD], o=viewO[vi], j=md.view_origins.indexOf(o); if(j<0)return;
   const c=md.cloud[j], w=md.cloud_w[j], z=D.pos[o], mm=v=>v*10;
   const rel=c.map(p=>[0,1,2].map(a=>mm(p[a]-z[a]))), wmax=Math.max(...w);
@@ -193,8 +218,8 @@ function cloudPanel(){
       name:"most probable particle",text:["weight "+w[0].toExponential(2)+"<br>v = ("+c[0].slice(3).map(v=>(v/100).toFixed(2)).join(", ")+") m/s"],
       hovertemplate:"%{text}<extra></extra>"},
     {type:"scatter3d",mode:"markers",x:[0],y:[0],z:[0],marker:{color:INK,size:6,symbol:"x"},name:"measurement"}];
-  Plotly.react("pcloud",tr,{...base,uirevision:"keepc",margin:{l:0,r:0,t:40,b:0},
-    title:{text:"Particle cloud now ("+md.label+"), "+c.length+" of the particles shown",font:{size:12},x:0},
+  Plotly.react("pcloud",tr,{...base,uirevision:"keepc",margin:{l:0,r:0,t:64,b:0},legend:{orientation:"h",y:1.0,x:0},
+    title:{text:"Particle cloud now, "+c.length+" of the particles shown",font:{size:12},x:0,y:0.98},
     scene:{xaxis:axis("Δx [mm]"),yaxis:axis("Δy [mm]"),zaxis:axis("Δz [mm]"),aspectmode:"cube"}},{responsive:true});
 }
 function cursor(){const x=viewO[vi]*dt;return {type:"line",xref:"x",yref:"paper",x0:x,x1:x,y0:0,y1:1,line:{color:INK,width:1}}}
@@ -202,7 +227,7 @@ function info(){
   const o=viewO[vi], k=+hsel.value;
   let h="<b>t = "+(o*dt).toFixed(2)+" s</b> · speed <b>"+(D.speed[o]??NaN).toFixed(2)+" m/s</b> · acceleration <b>"+(D.acc[o]??NaN).toFixed(1)+" m/s²</b> · height z <b>"+D.pos[o][2].toFixed(1)+" cm</b><br>";
   h+="Error at "+hsel.options[hsel.selectedIndex].text+": ";
-  h+=names.map((nm,m)=>{const md=D.models[nm];const j=md.origins.indexOf(o);const e=j<0?null:md.err[k][j];
+  h+=names.map((nm,m)=>[nm,m]).filter(([nm])=>vis(nm)).map(([nm,m])=>{const md=D.models[nm];const j=md.origins.indexOf(o);const e=j<0?null:md.err[k][j];
     return "<span class='sw' style='background:"+C[m]+"'></span>"+LBL(nm)+" <b>"+(e==null?"–":e.toFixed(2)+" cm")+"</b>"}).join(" · ");
   document.getElementById("info").innerHTML=h;
   document.getElementById("tlabel").textContent=(o*dt).toFixed(1)+" / "+(N*dt).toFixed(1)+" s";

@@ -1,0 +1,21 @@
+{
+ "machine": "Bozydar AMD64 Intel64 Family 6 Model 158 Stepping 9, GenuineIntel",
+ "torch": "2.14.1+cpu",
+ "variants": {
+  "tf_t1": {
+   "params": 4570,
+   "weights_bytes": 24746,
+   "call_ms": 0.31209999997372506
+  },
+  "tf_t2": {
+   "params": 10366,
+   "weights_bytes": 47914,
+   "call_ms": 0.3126999999949476
+  },
+  "tf_t3": {
+   "params": 4910,
+   "weights_bytes": 26154,
+   "call_ms": 0.29540000014094403
+  }
+ }
+}

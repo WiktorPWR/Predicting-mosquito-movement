@@ -117,7 +117,7 @@ def verdict(res, a, b, key):
     return f"{diff:+.3f} (spread {spread:.3f}) {word}" if not np.isnan(spread) else f"{diff:+.3f} {word}"
 
 
-def plot_curves(res, path, relative=False):
+def plot_curves(res, path, relative=False, title="LSTM vs GRU", ylim=(0.8, 1.6)):
     fig, ax = _fig(figsize=(11, 5.8))
     h = np.arange(1, MAX_H + 1) * FRAME_S
     ref = np.mean([r["curve"] for r in res[BASE]["runs"]], axis=0) if relative else 1.0
@@ -134,13 +134,13 @@ def plot_curves(res, path, relative=False):
     ax.set_xlabel("prediction horizon [s] (log scale)", color=INK2)
     if relative:
         ax.axhline(1.0, color=INK2, lw=0.8)
-        ax.set_ylim(0.8, 1.6)
+        ax.set_ylim(*ylim)
         ax.set_ylabel("mean error / mean error of the GRU baseline", color=INK2)
         ax.set_title("Error relative to the GRU baseline (mean of seeds, band = min–max over seeds)", color=INK, loc="left")
     else:
         ax.set_yscale("log")
         ax.set_ylabel("mean position error [cm] (log scale)", color=INK2)
-        ax.set_title("LSTM vs GRU: mean error vs horizon (mean of seeds, band = min–max over seeds)", color=INK, loc="left")
+        ax.set_title(f"{title}: mean error vs horizon (mean of seeds, band = min–max over seeds)", color=INK, loc="left")
     _style(ax)
     ax.legend(frameon=False, labelcolor=INK, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=9)
     fig.tight_layout(); fig.savefig(path, dpi=120, facecolor=SURFACE); plt.close(fig)

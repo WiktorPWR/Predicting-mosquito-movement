@@ -11,7 +11,9 @@ Code only; results go to [../Results/](../Results/). Run everything from the rep
 | [baselines/](baselines/README.md) | constant velocity, linear autoregression |
 | [gru/](gru/README.md) | GRU networks: four input representations, network size, window length, 10-step output |
 | [lstm/](lstm/README.md) | LSTM vs GRU study: LSTM variants of the selected 10-step GRU, 5 seeds each |
-| `compare_models.py` | tables of all evaluated models and figures of the 8 main ones → `Results/comparison/`; GRU experiment figure → `Results/gru/` |
+| [transformer/](transformer/README.md) | small transformer encoders (3 variants, 5 seeds each) vs the GRU baseline and LSTM B |
+| `compare_models.py` | tables of all evaluated models; figures of the selected model of every algorithm (Kalman, particle filter, baselines, best GRU, LSTM, transformer) → `Results/comparison/`; GRU experiment figure → `Results/gru/` |
+| `benchmark.py` | final benchmark of the selected models (Kalman, particle filter, linear AR, GRU, LSTM, transformer) → `Results/benchmark/` |
 
 ## Evaluation protocol (same for every algorithm)
 
@@ -53,6 +55,8 @@ error stays within 15 % of the steady state (mean over samples 201–300). Resul
 `python -m Algorytms.common.viewer` → `Results/viewer/index.html` (works offline). For every test trajectory:
 3D trajectory with the last second, the true future and every algorithm's prediction for a chosen horizon; time
 slider / playback; error-over-time and speed charts (click to jump); for particle filters the particle cloud.
+Algorithm switches under the header show / hide each algorithm in all charts at once ("all" / "none" buttons); the
+choice is kept when switching trajectories, and every algorithm keeps its colour.
 
 ## Adding an algorithm
 

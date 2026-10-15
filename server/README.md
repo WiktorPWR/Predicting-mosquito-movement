@@ -1,4 +1,49 @@
-# Running the LSTM vs GRU study on the server
+# Running the studies on the server
+
+Two studies have a ready server bundle and start script:
+
+| study | pack (on this computer) | start (on the server) | results to bring back |
+|---|---|---|---|
+| LSTM vs GRU | `python -m server.make_bundle lstm` | `bash server/run_lstm_study.sh` | `lstm_results.tar.gz` |
+| Transformer | `python -m server.make_bundle transformer` | `bash server/run_transformer_study.sh` | `transformer_results.tar.gz` |
+
+## Transformer study, quick version
+
+On this computer:
+
+```
+.venv/Scripts/python -m server.make_bundle transformer
+scp transformer_server_bundle.zip sandbox:~
+```
+
+On the server:
+
+```
+ssh sandbox
+mkdir -p ~/transformer_study && cd ~/transformer_study && unzip -o ~/transformer_server_bundle.zip
+tmux new -s tf 'bash server/run_transformer_study.sh 2>&1 | tee -a transformer_study.log'
+```
+
+What the script does:
+
+- trains 3 variants × 5 seeds, 6 at a time, 1 thread each, `nice 19`;
+- evaluates them and compares them with the GRU baseline and LSTM B (their evaluations are in the bundle);
+- packs `transformer_results.tar.gz`.
+
+Expected time: ~3.5–4 h. Progress: `~/ml/bin/python -m Algorytms.transformer.run_all status`.
+
+Back on this computer, in the repository root:
+
+```
+scp sandbox:~/transformer_study/transformer_results.tar.gz .
+tar xzf transformer_results.tar.gz
+```
+
+Stopping and resuming work exactly as described below for the LSTM study.
+
+---
+
+## LSTM vs GRU study (detailed description)
 
 Target: the "sandbox" server.
 
@@ -14,7 +59,7 @@ Everything runs on the CPU.
 ## 1. On this computer: pack
 
 ```
-.venv/Scripts/python -m server.make_bundle
+.venv/Scripts/python -m server.make_bundle lstm
 ```
 
 This creates `lstm_server_bundle.zip` in the repository root (~34 MB). The data are not in git, so a clone is not
